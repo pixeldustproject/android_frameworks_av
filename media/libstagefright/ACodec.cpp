@@ -5051,12 +5051,14 @@ status_t ACodec::getPortFormat(OMX_U32 portIndex, sp<AMessage> &notify) {
                             return BAD_VALUE;
                         }
 
+                        int32_t right = rect.nLeft + rect.nWidth;
+                        int32_t bottom = rect.nTop + rect.nHeight;
                         notify->setRect(
                                 "crop",
                                 rect.nLeft,
                                 rect.nTop,
-                                rect.nLeft + rect.nWidth - 1,
-                                rect.nTop + rect.nHeight - 1);
+                                right - 1,
+                                bottom - 1);
 
                         width = rect.nWidth;
                         height = rect.nHeight;
