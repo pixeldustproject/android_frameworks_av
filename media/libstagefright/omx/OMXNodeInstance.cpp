@@ -862,13 +862,13 @@ status_t OMXNodeInstance::useBuffer(
         return BAD_VALUE;
     }
 
+#ifndef METADATA_CAMERA_SOURCE
     if (!mSailed) {
         ALOGE("b/35467458");
         android_errorWriteLog(0x534e4554, "35467458");
         return BAD_VALUE;
     }
 
-#ifndef METADATA_CAMERA_SOURCE
     // metadata buffers are not connected cross process
     // use a backup buffer instead of the actual buffer
     BufferMeta *buffer_meta;
@@ -1321,11 +1321,13 @@ status_t OMXNodeInstance::allocateSecureBuffer(
 
     Mutex::Autolock autoLock(mLock);
 
+#ifndef METADATA_CAMERA_SOURCE
     if (!mSailed) {
         ALOGE("b/35467458");
         android_errorWriteLog(0x534e4554, "35467458");
         return BAD_VALUE;
     }
+#endif
 
     BufferMeta *buffer_meta = new BufferMeta(size, portIndex);
 
@@ -1386,13 +1388,13 @@ status_t OMXNodeInstance::allocateBufferWithBackup(
         return BAD_VALUE;
     }
 
+#ifndef METADATA_CAMERA_SOURCE
     if (!mSailed) {
         ALOGE("b/35467458");
         android_errorWriteLog(0x534e4554, "35467458");
         return BAD_VALUE;
     }
 
-#ifndef METADATA_CAMERA_SOURCE
     // metadata buffers are not connected cross process; only copy if not meta
     bool copy = mMetadataType[portIndex] == kMetadataBufferTypeInvalid;
 
