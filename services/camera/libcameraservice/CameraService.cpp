@@ -329,7 +329,7 @@ void CameraService::onDeviceStatusChanged(camera_device_status_t  cameraId,
 
             // Set the device status to NOT_PRESENT, clients will no longer be able to connect
             // to this device until the status changes
-            updateStatus(ICameraServiceListener::STATUS_NOT_PRESENT, id);
+            updateStatus(ICameraServiceListener::STATUS_NOT_PRESENT, id, true);
 
             // Remove cached shim parameters
             state->setShimParams(CameraParameters());
@@ -359,7 +359,7 @@ void CameraService::onDeviceStatusChanged(camera_device_status_t  cameraId,
             logDeviceAdded(id, String8::format("Device status changed from %d to %d", oldStatus,
                     newStatus));
         }
-        updateStatus(static_cast<int32_t>(newStatus), id);
+        updateStatus(static_cast<int32_t>(newStatus), id, true);
     }
 
 }
@@ -2196,7 +2196,7 @@ status_t CameraService::BasicClient::startCameraOps() {
 
     // Transition device availability listeners from PRESENT -> NOT_AVAILABLE
     mCameraService->updateStatus(ICameraServiceListener::STATUS_NOT_AVAILABLE,
-            String8::format("%d", mCameraId));
+            String8::format("%d", mCameraId), false);
 
     // Transition device state to OPEN
     mCameraService->updateProxyDeviceState(ICameraServiceProxy::CAMERA_STATE_OPEN,
@@ -2220,7 +2220,7 @@ status_t CameraService::BasicClient::finishCameraOps() {
 
         // Transition to PRESENT if the camera is not in either of the rejected states
         mCameraService->updateStatus(ICameraServiceListener::STATUS_PRESENT,
-                String8::format("%d", mCameraId), rejected);
+                String8::format("%d", mCameraId), false, rejected);
 
         // Transition device state to CLOSED
         mCameraService->updateProxyDeviceState(ICameraServiceProxy::CAMERA_STATE_CLOSED,
@@ -2702,11 +2702,11 @@ void CameraService::handleTorchClientBinderDied(const wp<IBinder> &who) {
             __FUNCTION__);
 }
 
-void CameraService::updateStatus(int32_t status, const String8& cameraId) {
-    updateStatus(status, cameraId, {});
+void CameraService::updateStatus(int32_t status, const String8& cameraId, bool updateTorchStatus) {
+    updateStatus(status, cameraId, updateTorchStatus, {});
 }
 
-void CameraService::updateStatus(int32_t status, const String8& cameraId,
+void CameraService::updateStatus(int32_t status, const String8& cameraId, bool updateTorchStatus,
         std::initializer_list<int32_t> rejectSourceStates) {
     // Do not lock mServiceLock here or can get into a deadlock from
     // connect() -> disconnect -> updateStatus
@@ -2719,12 +2719,15 @@ void CameraService::updateStatus(int32_t status, const String8& cameraId,
         return;
     }
 
+    // Framework must always update the torch status if the module version < CAMERA_MODULE_API_VERSION_2_4.
+    updateTorchStatus = updateTorchStatus || (mModule->getModuleApiVersion() < CAMERA_MODULE_API_VERSION_2_4);
+
     // Update the status for this camera state, then send the onStatusChangedCallbacks to each
     // of the listeners with both the mStatusStatus and mStatusListenerLock held
-    state->updateStatus(status, cameraId, rejectSourceStates, [this]
+    state->updateStatus(status, cameraId, rejectSourceStates, [this, updateTorchStatus]
             (const String8& cameraId, int32_t status) {
 
-            if (status != ICameraServiceListener::STATUS_ENUMERATING) {
+            if (updateTorchStatus && status != ICameraServiceListener::STATUS_ENUMERATING) {
                 // Update torch status if it has a flash unit.
                 Mutex::Autolock al(mTorchStatusMutex);
                 int32_t torchStatus;

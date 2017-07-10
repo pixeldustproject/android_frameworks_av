@@ -669,9 +669,9 @@ private:
      * This method must be idempotent.
      * This method acquires mStatusLock and mStatusListenerLock.
      */
-    void updateStatus(int32_t status, const String8& cameraId,
+    void updateStatus(int32_t status, const String8& cameraId, bool updateTorchStatus,
             std::initializer_list<int32_t> rejectedSourceStates);
-    void updateStatus(int32_t status, const String8& cameraId);
+    void updateStatus(int32_t status, const String8& cameraId, bool updateTorchStatus);
 
     // flashlight control
     sp<CameraFlashlight> mFlashlight;
