@@ -321,7 +321,8 @@ status_t NuMediaExtractor::selectTrack(size_t index) {
     info->mTrackFlags = 0;
 
     const char *mime;
-    CHECK(source->getFormat()->findCString(kKeyMIMEType, &mime));
+    sp<MetaData> meta = source->getFormat();
+    CHECK(meta->findCString(kKeyMIMEType, &mime));
 
     if (!strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_VORBIS)) {
         info->mTrackFlags |= kIsVorbis;
