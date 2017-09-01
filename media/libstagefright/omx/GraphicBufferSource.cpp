@@ -632,11 +632,12 @@ bool GraphicBufferSource::fillCodecBuffer_l() {
         mBufferUseCount[item.mSlot] = 0;
     }
 
+#ifndef QCOM_BSP_LEGACY
     if (item.mDataSpace != mLastDataSpace) {
         onDataSpaceChanged_l(
                 item.mDataSpace, (android_pixel_format)mBufferSlot[item.mSlot]->getPixelFormat());
     }
-
+#endif
 
     err = UNKNOWN_ERROR;
 
