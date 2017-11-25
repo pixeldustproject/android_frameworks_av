@@ -74,7 +74,6 @@ AudioFlinger::EffectModule::EffectModule(ThreadBase *thread,
 {
     ALOGV("Constructor %p pinned %d", this, pinned);
     int lStatus;
-    bool setVal = false;
 
     // create effect engine from effect factory
     mStatus = EffectCreate(&desc->uuid, sessionId, thread->id(), &mEffectInterface);
@@ -87,11 +86,8 @@ AudioFlinger::EffectModule::EffectModule(ThreadBase *thread,
         mStatus = lStatus;
         goto Error;
     }
-    if (thread->type() == ThreadBase::OFFLOAD ||
-        (thread->type() == ThreadBase::DIRECT && thread->mIsDirectPcm)) {
-        setVal = true;
-    }
-    setOffloaded(setVal, thread->id());
+
+    setOffloaded(thread->type() == ThreadBase::OFFLOAD, thread->id());
 
     ALOGV("Constructor success name %s, Interface %p", mDescriptor.name, mEffectInterface);
     return;
